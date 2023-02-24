@@ -1,0 +1,7 @@
+logging:
+  level:
+    root: INFO
+
+blackbox:
+  rootPath: D:\WorkOut\blackbox
+
