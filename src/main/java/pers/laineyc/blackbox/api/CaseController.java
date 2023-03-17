@@ -19,23 +19,25 @@ public class CaseController {
     @Autowired
     private CaseContextService caseContextService;
 
-    @GetMapping(path="/api/v1/case/collect/{caseName}")
+    @GetMapping(path="/api/v1/case/{case}/collect")
     @ResponseBody
-    public ResponseMessage<String> collect(@PathVariable String caseName) {
+    public ResponseMessage<String> collect(@PathVariable("case") String caseName) {
         CaseCollectParam param = new CaseCollectParam();
         param.setName(caseName);
         caseService.collect(param);
         return ResponseMessage.ok();
     }
 
-    @GetMapping(path="/api/v1/case/prometheus/{caseName}", produces="text/plain")
+    @GetMapping(path="/api/v1/case/{case}/prometheus", produces="text/plain")
     @ResponseBody
-    public String prometheus(@PathVariable String caseName)  {
-        CaseCollectParam param = new CaseCollectParam();
-        param.setName(caseName);
-        caseService.collect(param);
-
+    public String prometheus(@PathVariable("case") String caseName)  {
         CaseContext caseContext = caseContextService.getByUri(caseName);
+        if(caseContext == null) {
+            CaseCollectParam param = new CaseCollectParam();
+            param.setName(caseName);
+            caseService.collect(param);
+            caseContext = caseContextService.getByUri(caseName);
+        }
         return caseContext.scrape();
     }
 

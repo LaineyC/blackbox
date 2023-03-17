@@ -10,33 +10,80 @@ BlackBox是一个指标采集器框架，通过配置与脚本即可定义采集
   * 由case.yml定义
   * 是Exporter的具体执行
 
-**示意流程**
+**实体关系**
+```mermaid
+erDiagram
+    Case o{ -- ||  Exporter : apply
+
+    Exporter || -- }o Param : contains
+    Exporter || -- || Meters : contains
+    Exporter || -- |{ Script : contains
+    Exporter || -- }o Pipeline : contains
+    Exporter || -- }o Trigger : contains
+    Exporter || -- |{ Collector : contains
+    
+    Meters || -- }o Counter : contains
+    Meters || -- }o Gauge : contains
+    Meters || -- }o Timer : contains
+    Meters || -- }o Summary : contains
+    
+    Pipeline || -- |{ Stage : contains
+    Stage || -- |{ Script : reference
+    
+    Trigger || -- o| Pipeline : reference
+    Trigger || -- o| Script : reference
+
+    Collector || -- o| Pipeline : reference
+    Collector || -- o| Script : reference
+```
+
+**主要流程**
 ```mermaid
 flowchart TD;
-    CollectStart(Collect 采集开始) --> BeforeTrigger_1(Trigger 前置触发器 1)
-    BeforeTrigger_1 -- 触发器之间串行 --> BeforeTrigger_n(Trigger 前置触发器 n);
+subgraph 采集流程
+    CollectStart(Collect 采集 开始) --> BeforeTrigger_1(Trigger 前置触发器 1)
+    BeforeTrigger_1 -- 触发器之间串行 --> BeforeTrigger_n(Trigger 前置触发器 n)
 
-    BeforeTrigger_n -- 模块之间并行 --> Collector_1(Collector 采集模块 1);
-    BeforeTrigger_n -- 模块之间并行 --> Collector_n(Collector 采集模块 n);
+    BeforeTrigger_n -- 模块之间并行 --> Collector_1(Collector 采集模块 1)
+    BeforeTrigger_n -- 模块之间并行 --> Collector_n(Collector 采集模块 n)
    
-    Collector_1 & Collector_n --> AfterTrigger_1(Trigger 后置触发器 1);
+    Collector_1 & Collector_n --> AfterTrigger_1(Trigger 后置触发器 1)
 
-    AfterTrigger_1 -- 触发器之间串行 --> AfterTrigger_n(Trigger 后置触发器 n);
-    AfterTrigger_n --> CollectEnd(Collect 采集结束);
+    AfterTrigger_1 -- 触发器之间串行 --> AfterTrigger_n(Trigger 后置触发器 n)
+    AfterTrigger_n --> CollectEnd(Collect 采集 结束)
+end
 
-
-
-    PipelineStart(Pipeline 流水线开始) --> PipelineStageSerialStart(Stage 场景 1 Serial 开始)
+subgraph 流水线流程
+    PipelineStart(Pipeline 流水线 开始) --> PipelineStageSerialStart(Stage 场景 1 Serial 串行模式 开始)
     PipelineStageSerialStart --> PipelineStageSerialScript_1(Script 脚本 1)
     PipelineStageSerialScript_1 -- 串行执行脚本 --> PipelineStageSerialScript_n(Script 脚本 n)
-    PipelineStageSerialScript_n --> PipelineStageSerialEnd(Stage 场景 1 Serial 结束)
+    PipelineStageSerialScript_n --> PipelineStageSerialEnd(Stage 场景 1 Serial 串行模式 结束)
     
-    PipelineStageSerialEnd -- 场景之间串行 --> PipelineStageParallelStart(Stage 场景 n Parallel 开始)
+    PipelineStageSerialEnd -- 场景之间串行 --> PipelineStageParallelStart(Stage 场景 n Parallel 并行模式 开始)
     PipelineStageParallelStart -- 并行执行脚本 --> PipelineStageParallelScript_1(Script 脚本 1)
     PipelineStageParallelStart -- 并行执行脚本 --> PipelineStageParallelScript_n(Script 脚本 n)
-    PipelineStageParallelScript_1 & PipelineStageParallelScript_n --> PipelineStageParallelEnd(Stage 场景 n Parallel 结束)
+    PipelineStageParallelScript_1 & PipelineStageParallelScript_n --> PipelineStageParallelEnd(Stage 场景 n Parallel 并行模式 结束)
     
-    PipelineStageParallelEnd --> PipelineEnd(Pipeline 流水线结束)
+    PipelineStageParallelEnd --> PipelineEnd(Pipeline 流水线 结束)
+end
+```
+
+**采集时序**
+```mermaid
+sequenceDiagram
+    autonumber
+    
+    Prometheus->>+Case: 采集监控数据
+opt 即时采集
+    Case->>+Monitored: [Collect流程] 采集监控数据
+    Monitored-->>-Case: 返回监控数据
+end
+    Case-->>-Prometheus: 返回监控数据
+
+opt 定时采集
+    Case->>+Monitored: [Collect流程] 采集监控数据
+    Monitored-->>-Case: 返回监控数据
+end
 ```
 
 # 应用配置
@@ -462,7 +509,7 @@ Timer专用于时间
 
 **根据Exporter定义 指定参数采集一次 调试Exporter Case时用**
 
-POST /api/v1/exporter/collect
+POST /api/v1/exporters/collect
 
 RequestHeader 
 * Content-Type: application/json;charset=UTF-8
@@ -496,7 +543,7 @@ ResponseHeader
 
 **根据Case定义采集一次**
 
-GET /api/v1/case/collect/{caseName}
+GET /api/v1/cases/{case}/collect
 
 RequestHeader
 * Content-Type: application/json;charset=UTF-8
@@ -515,7 +562,7 @@ ResponseBody
 
 **指标上报接口 返回Prometheus格式的指标**
 
-GET /api/v1/metric/prometheus/{caseName}
+GET /api/v1/cases/{case}/prometheus
 
 ResponseHeader
 * Content-Type: text/plain;charset=UTF-8 

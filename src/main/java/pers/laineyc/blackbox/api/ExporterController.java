@@ -16,7 +16,7 @@ public class ExporterController {
 
     @PostMapping(path="/api/v1/exporter/collect", produces="text/plain")
     @ResponseBody
-    public String collect( @RequestBody ExporterCollectParam param) {
+    public String collect(@RequestBody ExporterCollectParam param) {
         return exporterService.collect(param);
     }
 

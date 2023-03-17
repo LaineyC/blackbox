@@ -299,7 +299,7 @@ $.log.info("after");
 
 ## 2.调试Exporter
 
-POST /api/v1/exporter/collect
+POST /api/v1/exporters/collect
 
 RequestHeader
 * Content-Type: application/json;charset=UTF-8
