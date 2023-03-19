@@ -37,52 +37,83 @@ erDiagram
     Collector || -- o| Script : reference
 ```
 
-**主要流程**
-```mermaid
-flowchart TD;
-subgraph 采集流程
-    CollectStart(Collect 采集 开始) --> BeforeTrigger_1(Trigger 前置触发器 1)
-    BeforeTrigger_1 -- 触发器之间串行 --> BeforeTrigger_n(Trigger 前置触发器 n)
-
-    BeforeTrigger_n -- 模块之间并行 --> Collector_1(Collector 采集模块 1)
-    BeforeTrigger_n -- 模块之间并行 --> Collector_n(Collector 采集模块 n)
-   
-    Collector_1 & Collector_n --> AfterTrigger_1(Trigger 后置触发器 1)
-
-    AfterTrigger_1 -- 触发器之间串行 --> AfterTrigger_n(Trigger 后置触发器 n)
-    AfterTrigger_n --> CollectEnd(Collect 采集 结束)
-end
-
-subgraph 流水线流程
-    PipelineStart(Pipeline 流水线 开始) --> PipelineStageSerialStart(Stage 场景 1 Serial 串行模式 开始)
-    PipelineStageSerialStart --> PipelineStageSerialScript_1(Script 脚本 1)
-    PipelineStageSerialScript_1 -- 串行执行脚本 --> PipelineStageSerialScript_n(Script 脚本 n)
-    PipelineStageSerialScript_n --> PipelineStageSerialEnd(Stage 场景 1 Serial 串行模式 结束)
-    
-    PipelineStageSerialEnd -- 场景之间串行 --> PipelineStageParallelStart(Stage 场景 n Parallel 并行模式 开始)
-    PipelineStageParallelStart -- 并行执行脚本 --> PipelineStageParallelScript_1(Script 脚本 1)
-    PipelineStageParallelStart -- 并行执行脚本 --> PipelineStageParallelScript_n(Script 脚本 n)
-    PipelineStageParallelScript_1 & PipelineStageParallelScript_n --> PipelineStageParallelEnd(Stage 场景 n Parallel 并行模式 结束)
-    
-    PipelineStageParallelEnd --> PipelineEnd(Pipeline 流水线 结束)
-end
-```
-
 **采集时序**
 ```mermaid
 sequenceDiagram
-    autonumber
-    
-    Prometheus->>+Case: 采集监控数据
-opt 即时采集
-    Case->>+Monitored: [Collect流程] 采集监控数据
-    Monitored-->>-Case: 返回监控数据
-end
-    Case-->>-Prometheus: 返回监控数据
 
-opt 定时采集
-    Case->>+Monitored: [Collect流程] 采集监控数据
+autonumber
+
+Note over Prometheus: 监控系统
+Note over Case: 采集器
+Note over Monitored: 被监控系统
+
+alt Case即时采集模式
+  loop Prometheus定时采集
+    Prometheus->>+Case: 采集监控数据
+    Case->>+Monitored: [采集流程] 采集监控数据
     Monitored-->>-Case: 返回监控数据
+    Case-->>-Prometheus: 返回监控数据
+  end
+else Case定时采集模式
+  loop Case定时采集
+    Case->>+Monitored: [采集流程] 采集监控数据
+    Monitored-->>-Case: 返回监控数据
+  end
+  loop Prometheus定时采集
+    Prometheus->>+Case: 采集监控数据
+    Case-->>-Prometheus: 返回监控数据
+  end
+end
+```
+
+**核心流程**
+```mermaid
+flowchart TD;
+
+subgraph 流水线流程
+    PipelineFlow_PipelineStart(Pipeline 流水线 开始) --> PipelineFlow_HasNextStage{Stage 有未执行场景?}
+    PipelineFlow_HasNextStage -- 是 --> StageFlow_StageStart
+    
+    StageFlow_StageStart(Stage 场景 开始) --> StageFlow_IsSerial{Stage 串行场景?}
+    StageFlow_IsSerial -- 是 --> StageFlow_HasNextScript{Script 有未执行脚本?}
+    
+    StageFlow_HasNextScript -- 是 --> StageFlow_ScriptSerialFlow(Script 执行单个脚本)
+    StageFlow_HasNextScript -- 否 --> StageFlow_StageEnd(Stage 场景 结束)
+    StageFlow_ScriptSerialFlow --> StageFlow_HasNextScript
+    
+    StageFlow_IsSerial -- 否 --> StageFlow_ScriptParallelFlow(Script 并行执行所有脚本)
+    StageFlow_ScriptParallelFlow --> StageFlow_StageEnd(Stage 场景 结束)
+    
+    PipelineFlow_HasNextStage -- 否 --> PipelineFlow_PipelineEnd(Pipeline 流水线 结束)
+    StageFlow_StageEnd --> PipelineFlow_HasNextStage
+end
+
+subgraph 采集模块流程
+    CollectorFlow_CollectorStart(Collector 采集模块 开始) --> CollectorFlow_HasPipeline{Pipeline 有配置流水线?}
+    CollectorFlow_HasPipeline -- 是 --> CollectorFlow_PipelineFlow(Pipeline 执行流水线 流水线流程)
+    CollectorFlow_HasPipeline -- 否 --> CollectorFlow_ScriptFlow(Script 执行脚本)
+    CollectorFlow_ScriptFlow --> CollectorFlow_CollectorEnd(Collector 采集模块 结束)
+    CollectorFlow_PipelineFlow --> CollectorFlow_CollectorEnd
+end
+
+subgraph 触发器流程
+    TriggerFlow_TriggerStart(Trigger 采集模块 开始) --> TriggerFlow_HasPipeline{Pipeline 有配置流水线?}
+    TriggerFlow_HasPipeline -- 是 --> TriggerFlow_PipelineFlow(Pipeline 执行流水线 流水线流程)
+    TriggerFlow_HasPipeline -- 否 --> TriggerFlow_ScriptFlow(Script 执行脚本)
+    TriggerFlow_ScriptFlow --> TriggerFlow_TriggerEnd(Trigger 采集模块 结束)
+    TriggerFlow_PipelineFlow --> TriggerFlow_TriggerEnd
+end
+
+subgraph 采集流程
+    CollectFlow_CollectStart(Collect 采集 开始) --> CollectFlow_HasNextBeforeTrigger{Trigger 有未执行前置触发器?}
+    CollectFlow_HasNextBeforeTrigger -- 是 --> CollectFlow_BeforeTriggerFlow(Trigger 执行前置触发器 触发器流程)
+    CollectFlow_HasNextBeforeTrigger -- 否 --> CollectFlow_CollectorParallelFlow(Collector 并行执行所有采集模块 采集模块流程)
+    CollectFlow_BeforeTriggerFlow --> CollectFlow_HasNextBeforeTrigger
+    
+    CollectFlow_CollectorParallelFlow --> CollectFlow_HasNextAfterTrigger{Trigger 有未执行后置触发器?}
+    CollectFlow_HasNextAfterTrigger -- 是 --> CollectFlow_AfterTriggerFlow(Trigger 执行后置触发器 触发器流程)
+    CollectFlow_HasNextAfterTrigger -- 否 --> CollectFlow_CollectEnd(Collect 采集 结束)
+    CollectFlow_AfterTriggerFlow --> CollectFlow_HasNextAfterTrigger
 end
 ```
 
@@ -509,7 +540,7 @@ Timer专用于时间
 
 **根据Exporter定义 指定参数采集一次 调试Exporter Case时用**
 
-POST /api/v1/exporters/collect
+POST /api/v1/exporter/collect
 
 RequestHeader 
 * Content-Type: application/json;charset=UTF-8
@@ -543,7 +574,7 @@ ResponseHeader
 
 **根据Case定义采集一次**
 
-GET /api/v1/cases/{case}/collect
+GET /api/v1/case/{case}/collect
 
 RequestHeader
 * Content-Type: application/json;charset=UTF-8
@@ -562,7 +593,7 @@ ResponseBody
 
 **指标上报接口 返回Prometheus格式的指标**
 
-GET /api/v1/cases/{case}/prometheus
+GET /api/v1/case/{case}/prometheus
 
 ResponseHeader
 * Content-Type: text/plain;charset=UTF-8 
