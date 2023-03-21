@@ -38,7 +38,7 @@ params:
     type: STRING
   - name: account
     value: null
-    type: NEST
+    type: OBJECT
     nest:
       - name: username
         value: null

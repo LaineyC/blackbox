@@ -232,21 +232,48 @@ blackbox.rootPath: /config # 存放配置的根目录
 
 **Param** 参数
 
-| 属性名      | 类型                | 必填  | 约束                 | 描述                 |
-|----------|-------------------|-----|--------------------|--------------------|
-| name     | String            | `*` | 命名规则**KEY** 同层级下唯一 | 参数名                |
-| value    | Object            |     |                    | 参数默认值              |
-| type     | **ValueTypeEnum** | `*` | 默认STRING           | 参数值类型              |
-| required | Boolean           | `*` | 默认true             | 参数值类型              |
-| nest     | **Param[]**       |     |                    | 嵌套结构 当type为NEST时定义 |
+| 属性名        | 类型                | 必填  | 约束                 | 描述                      |
+|------------|-------------------|-----|--------------------|-------------------------|
+| name       | String            | `*` | 命名规则**KEY** 同层级下唯一 | 参数名                     |
+| value      | Object            |     |                    | 参数默认值                   |
+| type       | **ValueTypeEnum** | `*` | 默认STRING           | 参数值类型                   |
+| validation | **Validation**    |     |                    | 验证规则                    |
+| item       | **Item**          |     | type为ARRAY必填       | 定义数组元素信息 type为ARRAY时定义  |
+| properties | **Param[]**       |     | type为OBJECT必填      | 定义嵌套对象信息 type为OBJECT时定义 |
 
 **ValueTypeEnum[String]** 值类型
 
-| 值      | 描述  |
-|--------|-----|
-| STRING | 字符型 |
-| NUMBER | 数字型 |
-| NEST   | 嵌套型 |
+| 值       | 描述  |
+|---------|-----|
+| BOOLEAN | 布尔型 |
+| INTEGER | 整型  |
+| NUMBER  | 数字型 |
+| STRING  | 字符型 |
+| ARRAY   | 数组型 |
+| OBJECT  | 对象型 |
+
+**Validation** 验证规则
+
+| 属性名      | 类型         | 必填  | 约束  | 描述      |
+|----------|------------|-----|-----|---------|
+| required | Boolean    |     |     | 是否必填    |
+| rules    | **Rule[]** |     |     | 自定义验证规则 |
+
+**Rule** 参数
+
+| 属性名     | 类型     | 必填  | 约束  | 描述      |
+|---------|--------|-----|-----|---------|
+| rule    | String | `*` |     | 自定义规则   |
+| message | String | `*` |     | 自定义错误信息 |
+
+**Item** 数组元素信息
+
+| 属性名        | 类型                | 必填  | 约束            | 描述                      |
+|------------|-------------------|-----|---------------|-------------------------|
+| type       | **ValueTypeEnum** | `*` | 默认STRING      | 参数值类型                   |
+| validation | **Validation**    |     |               | 验证规则                    |
+| item       | **Item**          |     | type为ARRAY必填  | 定义数组元素信息 type为ARRAY时定义  |
+| properties | **Param[]**       |     | type为OBJECT必填 | 定义嵌套对象信息 type为OBJECT时定义 |
 
 **Meters** 指标定义
 

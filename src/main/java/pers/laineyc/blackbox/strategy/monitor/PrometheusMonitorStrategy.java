@@ -1,4 +1,4 @@
-package pers.laineyc.blackbox.strategy;
+package pers.laineyc.blackbox.strategy.monitor;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;

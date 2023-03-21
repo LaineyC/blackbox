@@ -3,6 +3,7 @@ package pers.laineyc.blackbox.service;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -19,6 +20,7 @@ import pers.laineyc.blackbox.model.meter.Summary;
 import pers.laineyc.blackbox.model.meter.Timer;
 import pers.laineyc.blackbox.param.ExporterCollectParam;
 import pers.laineyc.blackbox.context.CaseContext;
+import pers.laineyc.blackbox.strategy.validate.ValidateStrategy;
 import pers.laineyc.blackbox.util.ThreadLocalUtil;
 import pers.laineyc.blackbox.util.YamlUtil;
 
@@ -30,6 +32,7 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 @Slf4j
+@DependsOn({"validateStrategyConfigurer"})
 @Component
 public class ExporterService {
 
@@ -265,7 +268,6 @@ public class ExporterService {
             throw new CommonException("Exporter.name[" + name + "]已存在");
         }
 
-
         String exporterDirName = exporterDir.getName();
         if(!Objects.equals(name, exporterDirName)) {
             throw new CommonException("Exporter.name[" + name + "]与采集器目录[" + exporterDirName + "]名称不一致");
@@ -275,45 +277,11 @@ public class ExporterService {
 
         List<Param> params = exporter.getParams();
         if(!CollectionUtils.isEmpty(params)) {
-            LinkedList<ParamRecord> paramStack = params.stream()
-                    .map(param -> new ParamRecord("Exporter.params", param))
-                    .collect(Collectors.toCollection(LinkedList::new));
-
-            while (!paramStack.isEmpty()) {
-                ParamRecord paramRecord = paramStack.pop();
-                String path = paramRecord.path();
-                Param param = paramRecord.param();
-                String paramName = param.getName();
+            params.forEach(param -> {
                 ValueType type = param.getType();
-                Object value = param.getValue();
-
-                if(ValueType.STRING.equals(type)) {
-                    if(value != null && !(value instanceof String)) {
-                        throw new CommonException(path + "." + paramName + "默认值value必须为" + type.name() + "类型");
-                    }
-                }
-                else if(ValueType.NUMBER.equals(type)) {
-                    if(value != null && !(value instanceof Number)) {
-                        throw new CommonException(path + "." + paramName + "默认值value必须为" + type.name() + "类型");
-                    }
-                }
-                else if(ValueType.NEST.equals(type)) {
-                    if(value != null) {
-                        if(!(value instanceof Map)) {
-                            throw new CommonException(path + "." + paramName + "默认值value必须为" + type.name() + "类型");
-                        }
-
-                        if(!((Map)value).isEmpty()) {
-                            throw new CommonException(path + "." + paramName + "默认值value必须空对象{}");
-                        }
-                    }
-
-                    List<Param> nest = param.getNest();
-                    if(!CollectionUtils.isEmpty(nest)) {
-                        nest.forEach(nestParam -> paramStack.push(new ParamRecord(path + "." + paramName, nestParam)));
-                    }
-                }
-            }
+                ValidateStrategy strategy = ValidateStrategy.getStrategy(type);
+                strategy.validateAndBuildValue(param, null, "Exporter." + name + ".params");
+            });
         }
 
         Meters meters = exporter.getMeters();
@@ -414,48 +382,18 @@ public class ExporterService {
     }
 
 
-    public Map<String, Object> validateParam(List<Param> exporterParams, Map<String, Object> params, String path) {
+    public Map<String, Object> buildParamValue(List<Param> exporterParams, Map<String, Object> params, String path) {
         if(CollectionUtils.isEmpty(exporterParams)) {
             return Map.of();
         }
 
         Map<String, Object> copyParams = new HashMap<>();
-
         exporterParams.forEach(param -> {
             String paramName = param.getName();
-            Object defaultValue = param.getValue();
             Object value = params.get(paramName);
-            Boolean required = param.getRequired();
             ValueType type = param.getType();
-            if(Boolean.TRUE.equals(required)) {
-                if(value == null) {
-                    if(defaultValue == null) {
-                        throw new CommonException(path + "." + paramName + "不能为空");
-                    }
-                    else {
-                        value = defaultValue;
-                    }
-                }
-            }
-
-            if(ValueType.STRING.equals(type)) {
-                if(!(value instanceof String)) {
-                    throw new CommonException(path + "." + paramName + "必须为" + type.name() + "类型");
-                }
-            }
-            else if(ValueType.NUMBER.equals(type)) {
-                if(!(value instanceof Number)) {
-                    throw new CommonException(path + "." + paramName + "必须为" + type.name() + "类型");
-                }
-            }
-            else if(ValueType.NEST.equals(type)) {
-                if(!(value instanceof Map)) {
-                    throw new CommonException(path + "." + paramName + "必须为" + type.name() + "类型");
-                }
-
-                value = validateParam(param.getNest(), (Map<String, Object>)value , path + "." + paramName);
-            }
-
+            ValidateStrategy strategy = ValidateStrategy.getStrategy(type);
+            value = strategy.validateAndBuildValue(param, value, path);
             copyParams.put(paramName, value);
         });
 
@@ -473,7 +411,7 @@ public class ExporterService {
 
         Map<String, Object> params = case_.getParams();
         List<Param> exporterParams = exporter.getParams();
-        params = validateParam(exporterParams, params, "Case.params");
+        params = buildParamValue(exporterParams, params, "Case.params");
         case_.setParams(params);
 
         Monitor monitor = case_.getMonitor();
@@ -495,10 +433,6 @@ public class ExporterService {
     }
 
     private record CollectorFuture(Future<String> future, String collector){
-
-    }
-
-    private record ParamRecord(String path, Param param){
 
     }
 

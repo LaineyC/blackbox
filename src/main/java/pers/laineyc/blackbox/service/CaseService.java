@@ -150,7 +150,7 @@ public class CaseService {
 
         Map<String, Object> params = case_.getParams();
         List<Param> exporterParams = exporter.getParams();
-        params = exporterService.validateParam(exporterParams, params, "Case.exporter");
+        params = exporterService.buildParamValue(exporterParams, params, "Case." + name + ".params");
         case_.setParams(params);
 
         Monitor monitor = case_.getMonitor();

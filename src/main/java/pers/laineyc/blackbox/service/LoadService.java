@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pers.laineyc.blackbox.config.Constant;
 import pers.laineyc.blackbox.config.Properties;
-import pers.laineyc.blackbox.strategy.PrometheusMonitorStrategy;
+import pers.laineyc.blackbox.strategy.monitor.PrometheusMonitorStrategy;
 
 import java.io.File;
 
@@ -34,9 +34,6 @@ public class LoadService {
 
     @Autowired
     private LoadLockService loadLockService;
-
-    @Autowired
-    private PrometheusMonitorStrategy prometheusMonitorStrategy;
 
     @PostConstruct
     public void init(){
