@@ -1,5 +1,6 @@
 package pers.laineyc.blackbox.service;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -280,7 +281,7 @@ public class ExporterService {
             params.forEach(param -> {
                 ValueType type = param.getType();
                 ValidateStrategy strategy = ValidateStrategy.getStrategy(type);
-                strategy.validateAndBuildValue(param, null, "Exporter." + name + ".params");
+                strategy.validateAndBuildValue(false, param, null, "Exporter." + name + ".params");
             });
         }
 
@@ -382,7 +383,9 @@ public class ExporterService {
     }
 
 
-    public Map<String, Object> buildParamValue(List<Param> exporterParams, Map<String, Object> params, String path) {
+    public Map<String, Object> buildParamValue(Exporter exporter, Case _case, String path) {
+        Map<String, Object> params = _case.getParams();
+        List<Param> exporterParams = exporter.getParams();
         if(CollectionUtils.isEmpty(exporterParams)) {
             return Map.of();
         }
@@ -393,11 +396,26 @@ public class ExporterService {
             Object value = params.get(paramName);
             ValueType type = param.getType();
             ValidateStrategy strategy = ValidateStrategy.getStrategy(type);
-            value = strategy.validateAndBuildValue(param, value, path);
+            value = strategy.validateAndBuildValue(true, param, value, path);
             copyParams.put(paramName, value);
         });
 
-        return Collections.unmodifiableMap(copyParams);
+        handleExtensionsValidation: {
+            Extensions extensions = exporter.getExtensions();
+            if(extensions == null) {
+                break handleExtensionsValidation;
+            }
+
+            Extensions.Params extensionsParams = extensions.getParams();
+            if(extensionsParams == null) {
+                break handleExtensionsValidation;
+            }
+
+            String validationScript = extensionsParams.getValidationScript();
+            ValidateStrategy.validScript(validationScript, Collections.singletonMap("self", copyParams), path + ".");
+        }
+
+        return copyParams;
     }
 
     private void validateCase(Case case_){
@@ -409,9 +427,7 @@ public class ExporterService {
             throw new CommonException("Case.exporter[" + exporterName + "]不存在");
         }
 
-        Map<String, Object> params = case_.getParams();
-        List<Param> exporterParams = exporter.getParams();
-        params = buildParamValue(exporterParams, params, "Case.params");
+        Map<String, Object> params = buildParamValue(exporter, case_, "Case.params");
         case_.setParams(params);
 
         Monitor monitor = case_.getMonitor();

@@ -14,7 +14,7 @@ BlackBox是一个指标采集器框架，通过配置与脚本即可定义采集
 ```mermaid
 erDiagram
     Case o{ -- ||  Exporter : apply
-
+    Exporter || -- || Extensions : contains
     Exporter || -- }o Param : contains
     Exporter || -- || Meters : contains
     Exporter || -- |{ Script : contains
@@ -184,6 +184,7 @@ blackbox.rootPath: /config # 存放配置的根目录
 | pipelines  | **Pipeline[]**    |     |                   | 流水线 编排Script的执行流程                    |
 | triggers   | **Trigger[]**     |     |                   | 触发器 根据Event与Time触发Pipeline           |
 | collectors | **Collector[]**   | `*` |                   | 采集模块 每个模块流程对应一个Pipeline 可以定义多个采集模块   |
+| extensions | **Extensions**    | `*` |                   | 扩展配置                                 |
 
 **Case** 用例
 
@@ -254,17 +255,15 @@ blackbox.rootPath: /config # 存放配置的根目录
 
 **Validation** 验证规则
 
-| 属性名      | 类型         | 必填  | 约束  | 描述      |
-|----------|------------|-----|-----|---------|
-| required | Boolean    |     |     | 是否必填    |
-| rules    | **Rule[]** |     |     | 自定义验证规则 |
-
-**Rule** 参数
-
-| 属性名     | 类型     | 必填  | 约束  | 描述      |
-|---------|--------|-----|-----|---------|
-| rule    | String | `*` |     | 自定义规则   |
-| message | String | `*` |     | 自定义错误信息 |
+| 属性名      | 类型      | 必填  | 约束  | 描述                                                                                             |
+|----------|---------|-----|-----|------------------------------------------------------------------------------------------------|
+| notNull  | Boolean |     |     | 是否必填<br/>适用所有类型                                                                                |
+| notEmpty | Boolean |     |     | 是否允许为空<br/>类型为ARRAY时不为空数组[]<br/>类型为Object时不为空对象{}<br/>类型为STRING时不为空字符串""                       |
+| notBlank | Boolean |     |     | 是否允许为空<br/>字符串trim后不为空字符串""                                                                    |
+| pattern  | String  |     |     | 正则校验<br/>字符串格式验证                                                                               |
+| max      | Double  |     |     | 必须小于等于该值<br/>类型为INTEGER、NUMBER时表示值<br/>类型为STRING时表示长度<br/>类型为ARRAY时表示数组长度<br/>类型为OBJECT时表示属性数量 |
+| min      | Double  |     |     | 必须大于等于该值<br/>类型为INTEGER、NUMBER时表示值<br/>类型为STRING时表示长度<br/>类型为ARRAY时表示数组长度<br/>类型为OBJECT时表示属性数量 |
+| script   | String  |     |     | 自定义验证脚本 内置变量self表示当前参数值 <br/>适用所有类型                                                            |
 
 **Item** 数组元素信息
 
@@ -411,6 +410,12 @@ Timer专用于时间
 | cron     | String |                | 符合cron语法                 | 根据cron表达式定时执行 例如 `0/30 * * * * ?` 每30秒执行一次 |
 | pipeline | String | 当script为空时必填   | 值参照Pipeline.name         | 执行的Pipeline                                |
 | script   | String | 当pipeline为空时必填 | 值参照Script.name           | 执行的Script                                  |
+
+**Extensions** 扩展配置
+
+| 属性名                     | 类型     | 必填  | 约束  | 描述                                            |
+|-------------------------|--------|-----|-----|-----------------------------------------------|
+| params.validationScript | String |     |     | 验证脚本 用于验证Case.params的值 内置变量self表示整个params参数对象 |
 
 # 脚本说明
 脚本引擎GraalVM JavaScript

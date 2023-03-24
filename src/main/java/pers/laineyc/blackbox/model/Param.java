@@ -56,21 +56,19 @@ public class Param extends VerifiableValue {
     @Data
     public static class Validation {
 
-        @NotNull(message = "Validation.required不能为空")
-        private Boolean required = false;
+        private Boolean notNull;
 
-        @Valid
-        private List<@NotNull(message = "Validation.rules元素不能为空") Rule> rules = new ArrayList<>();
-    }
+        private String pattern;
 
-    @Data
-    public static class Rule {
+        private Double max;
 
-        @NotBlank(message = "Rule.rule不能为空")
-        private String rule;
+        private Double min;
 
-        @NotBlank(message = "Rule.message不能为空")
-        private String message;
+        private Boolean notEmpty;
+
+        private Boolean notBlank;
+
+        private String script;
     }
 
 }

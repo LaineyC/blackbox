@@ -11,6 +11,7 @@ import pers.laineyc.blackbox.enums.Monitor;
 import pers.laineyc.blackbox.exception.CommonException;
 import pers.laineyc.blackbox.model.*;
 import pers.laineyc.blackbox.param.CaseCollectParam;
+import pers.laineyc.blackbox.strategy.validate.ValidateStrategy;
 import pers.laineyc.blackbox.util.YamlUtil;
 import java.io.File;
 import java.io.FileReader;
@@ -148,9 +149,7 @@ public class CaseService {
             throw new CommonException("Case.exporter[" + exporterName + "]不存在");
         }
 
-        Map<String, Object> params = case_.getParams();
-        List<Param> exporterParams = exporter.getParams();
-        params = exporterService.buildParamValue(exporterParams, params, "Case." + name + ".params");
+        Map<String, Object> params = exporterService.buildParamValue(exporter, case_, "Case." + name + ".params");
         case_.setParams(params);
 
         Monitor monitor = case_.getMonitor();

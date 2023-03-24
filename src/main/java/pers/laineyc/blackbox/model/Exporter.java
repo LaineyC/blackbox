@@ -44,4 +44,7 @@ public class Exporter {
     @NotEmpty(message = "Exporter.collectors不能为空")
     private List<@NotNull(message = "Exporter.collectors元素不能为空") Collector> collectors = new ArrayList<>();
 
+    @Valid
+    private Extensions extensions;
+
 }

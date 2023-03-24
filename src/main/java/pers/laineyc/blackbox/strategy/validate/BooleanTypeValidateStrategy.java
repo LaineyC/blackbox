@@ -4,6 +4,8 @@ import pers.laineyc.blackbox.enums.ValueType;
 import pers.laineyc.blackbox.exception.CommonException;
 import pers.laineyc.blackbox.model.Param;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 public class BooleanTypeValidateStrategy extends ValidateStrategy {
@@ -13,7 +15,7 @@ public class BooleanTypeValidateStrategy extends ValidateStrategy {
     }
 
     @Override
-    public Object validateAndBuildValue(VerifiableValue verifiableValue, Object value, String path) {
+    public Object validateAndBuildValue(boolean checkValue, VerifiableValue verifiableValue, Object value, String path) {
         String name = verifiableValue.getName();
         Object defaultValue = verifiableValue.getValue();
         ValueType type = verifiableValue.getType();
@@ -23,23 +25,27 @@ public class BooleanTypeValidateStrategy extends ValidateStrategy {
             value = defaultValue;
         }
 
-        if(Objects.nonNull(value) && !(value instanceof Boolean)) {
-            throw new CommonException(buildPath(path, name) + "必须为" + type.name() + "类型");
-        }
-
-        if(validation == null) {
-            return value;
-        }
-
         if(value == null) {
-            if(Boolean.TRUE.equals(validation.getRequired())) {
+            if(checkValue && Objects.nonNull(validation) && Boolean.TRUE.equals(validation.getNotNull())) {
                 throw new CommonException(buildPath(path, name) + "必填");
             }
 
             return null;
         }
+        else {
+            if (!(value instanceof Boolean)) {
+                throw new CommonException(buildPath(path, name) + "必须为" + type.name() + "类型");
+            }
 
-        return value;
+            if(validation == null) {
+                return value;
+            }
+
+            String script = validation.getScript();
+            validScript(script, Collections.singletonMap("self", value), buildPath(path, name));
+
+            return value;
+        }
     }
 
 }
