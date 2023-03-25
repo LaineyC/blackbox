@@ -1,7 +1,11 @@
 # Demo示例
+设计一个Exporter
+
+定义一个Case执行Exporter采集逻辑
+
 假定配置根目录rootPath为/config
 
-## 1.Exporter设计
+### 1.Exporter设计
 ```text
 /config
     /exporters
@@ -297,7 +301,7 @@ $.meters.timer({meter:"timer.histogram.metric", tags:["t1", "t2"], value:5});
 $.log.info("after");
 ```
 
-## 2.调试Exporter
+### 2.调试Exporter
 
 POST /api/v1/exporter/collect
 
@@ -772,7 +776,7 @@ summary_histogram_metric_max{env="test",tag1="t1",tag2="t2",} 5.0
 
 ```
 
-## 3.根据调试提炼Case
+### 3.根据调试提炼Case
 
 **case.yml**
 ```yaml
@@ -793,4 +797,15 @@ collectors:
   - gauges_collector
   - timers_collector
   - summaries_collector
+```
+### 4. Prometheus采集接口配置
+
+配置采集接口 GET /api/v1/case/{case}/prometheus
+
+即 GET /api/v1/case/**demo-exporter-case**/prometheus
+
+```yaml
+scrape_configs:
+  - job_name: case
+    metrics_path: /api/v1/case/demo-exporter-case/prometheus
 ```

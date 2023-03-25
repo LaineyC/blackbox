@@ -10,7 +10,7 @@ BlackBox是一个指标采集器框架，通过配置与脚本即可定义采集
   * 由case.yml定义
   * 是Exporter的具体执行
 
-**实体关系**
+### 实体关系
 ```mermaid
 erDiagram
     Case o{ -- ||  Exporter : apply
@@ -37,7 +37,7 @@ erDiagram
     Collector || -- o| Script : reference
 ```
 
-**采集时序**
+### 采集时序
 ```mermaid
 sequenceDiagram
 
@@ -66,7 +66,7 @@ else Case定时采集模式
 end
 ```
 
-**核心流程**
+### 核心流程
 ```mermaid
 flowchart TD;
 
@@ -124,7 +124,7 @@ blackbox.rootPath: /config # 存放配置的根目录
 ```
 
 # 配置说明
-**目录结构**
+### 目录结构
 
 {id} 表示id为可变量
 ```text
@@ -153,11 +153,11 @@ blackbox.rootPath: /config # 存放配置的根目录
             /logs
     /logs # 应用日志目录
 ```
-**yml结构**
-* exporter.yml 结构为**Exporter**
-* case.yml 结构为**Case**
+### yml结构
+* exporter.yml 结构为[Exporter](#Exporter)
+* case.yml 结构为[Case](#Case)
 
-**附加说明**
+### 附加说明
 * **TypeName[RealTypeName]** 表示类型**TypeName**的实际类型为**RealTypeName**
 * 命名规则**NAME** 
   * 可以包含数字[0-9]、字母[a-zA-Z]、下划线[_]、中划线[-]
@@ -172,54 +172,60 @@ blackbox.rootPath: /config # 存放配置的根目录
   * 字母开头
   * 大小写敏感
 
-**Exporter** 采集器
+### Exporter
+采集器
 
-| 属性名        | 类型                | 必填  | 约束                | 描述                                   |
-|------------|-------------------|-----|-------------------|--------------------------------------|
-| name       | String            | `*` | 命名规则**NAME** 全局唯一 | 采集器名称                                |
-| monitors   | **MonitorEnum[]** | `*` |                   | 支持的监控系统                              | 
-| params     | **Param**         |     |                   | 参数 一般用于定义环境相关的参数 每个Case可以传入不同的params | 
-| meters     | **Meters**        | `*` |                   | 指标定义                                 |
-| scripts    | **Script[]**      | `*` |                   | 脚本 映射脚本文件 一个名称name对应一个脚本文件 用于后续使用    |
-| pipelines  | **Pipeline[]**    |     |                   | 流水线 编排Script的执行流程                    |
-| triggers   | **Trigger[]**     |     |                   | 触发器 根据Event与Time触发Pipeline           |
-| collectors | **Collector[]**   | `*` |                   | 采集模块 每个模块流程对应一个Pipeline 可以定义多个采集模块   |
-| extensions | **Extensions**    | `*` |                   | 扩展配置                                 |
+| 属性名        | 类型                                    | 必填  | 约束                     | 描述                                                                                 |
+|------------|---------------------------------------|-----|------------------------|------------------------------------------------------------------------------------|
+| name       | String                                | `*` | [命名规则NAME](#附加说明) 全局唯一 | 采集器名称                                                                              |
+| monitors   | [MonitorEnum[]](#MonitorEnum[String]) | `*` |                        | 支持的监控系统                                                                            | 
+| params     | [Param[]](#Param)                     |     |                        | 参数 一般用于定义环境相关的参数 每个[Case](#Case)可以传入不同的params                                      | 
+| meters     | [Meters](#Meters)                     | `*` |                        | 指标定义                                                                               |
+| scripts    | [Script[]](#Script)                   | `*` |                        | 脚本 映射脚本文件 一个名称name对应一个脚本文件 用于后续使用                                                  |
+| pipelines  | [Pipeline[]](#Pipeline)               |     |                        | 流水线 编排[Script](#Script)的执行流程                                                       |
+| triggers   | [Trigger[]](#Trigger)                 |     |                        | 触发器 根据[Event](#EventEnum[String])与[Time](#TimeEnum[String])触发[Pipeline](#Pipeline) |
+| collectors | [Collector[]](#Collector)             | `*` |                        | 采集模块 每个模块流程对应一个[Pipeline](#Pipeline) 可以定义多个采集模块                                    |
+| extensions | [Extensions](#Extensions)             | `*` |                        | 扩展配置                                                                               |
 
-**Case** 用例
+### Case
+用例
 
-| 属性名        | 类型              | 必填  | 约束                     | 描述                                                                                                           |
-|------------|-----------------|-----|------------------------|--------------------------------------------------------------------------------------------------------------|
-| name       | String          | `*` | 命名规则**NAME** 全局唯一      | 用例名称                                                                                                         |
-| exporter   | String          | `*` | 值参照Exporter.name       | 对应的采集器名称                                                                                                     |
-| monitor    | **MonitorEnum** | `*` | 值参照Exporter.monitors   | 指标上报的监控系统                                                                                                    |
-| params     | **JSON**        |     | 结构参照Exporter.params    | 实际参数 脚本里通过$.params获取                                                                                         |
-| commonTags | **JSON**        |     | 键值类型都为String           | 全局tag 在每个指标上都会加上commonTags定义的tag 例如commonTags={"t1": "v1"} Prometheus指标xxx_total则会加上label xxx_total{t1="v1"} |
-| collectors | String[]        | `*` | 值参照Exporter.collectors | 需要采集的模块                                                                                                      |
-| logging    | **Logging**     |     |                        | 日志配置 日志实现采用Logback                                                                                           |
+| 属性名        | 类型                                    | 必填  | 约束                                          | 描述                                                                                                           |
+|------------|---------------------------------------|-----|---------------------------------------------|--------------------------------------------------------------------------------------------------------------|
+| name       | String                                | `*` | [命名规则NAME](#附加说明) 全局唯一                      | 用例名称                                                                                                         |
+| exporter   | String                                | `*` | 值参照[Exporter.name](#Exporter)               | 对应的采集器名称                                                                                                     |
+| monitor    | [MonitorEnum[]](#MonitorEnum[String]) | `*` | 值参照[Exporter.monitors](#Exporter)           | 指标上报的监控系统                                                                                                    |
+| params     | [JSON](#JSON)                         |     | 结构参照[Exporter.params](#Exporter)            | 实际参数 脚本里通过$.params获取                                                                                         |
+| commonTags | [JSON](#JSON)                         |     | 键值类型都为String                                | 全局tag 在每个指标上都会加上commonTags定义的tag 例如commonTags={"t1": "v1"} Prometheus指标xxx_total则会加上label xxx_total{t1="v1"} |
+| collectors | String[]                              | `*` | 值参照[Exporter.collectors[i].name](#Exporter) | 需要采集的模块                                                                                                      |
+| logging    | [Logging](#Logging)                   |     |                                             | 日志配置 日志实现采用Logback                                                                                           |
 
-**JSON** 键值对 
+### JSON
+键值对 
 
 在脚本中通过object.propName或者object["propName"]获取属性值
 
-**MonitorEnum[String]** 监控系统枚举
+### MonitorEnum[String] 
+监控系统枚举
 
 | 值          | 描述             |
 |------------|----------------|
 | PROMETHEUS | Prometheus监控系统 |
 
-**Logging** 日志配置 
+### Logging
+日志配置 
 
 日志文件按照日期划分
 
-| 属性名          | 类型               | 必填  | 约束      | 描述                    |
-|--------------|------------------|-----|---------|-----------------------|
-| level        | **LogLevelEnum** |     | 默认WARN  | 日志级别                  |
-| maxFileSize  | String           |     | 默认100MB | 单个日志文件大小限制 单位KB MB GB |
-| totalSizeCap | String           |     | 默认1GB   | 日志总大小上限 单位KB MB GB    |
-| maxHistory   | Integer          |     | 默认30    | 日志保留天数                |
+| 属性名          | 类型                                    | 必填  | 约束      | 描述                    |
+|--------------|---------------------------------------|-----|---------|-----------------------|
+| level        | [LogLevelEnum](#LogLevelEnum[String]) |     | 默认WARN  | 日志级别                  |
+| maxFileSize  | String                                |     | 默认100MB | 单个日志文件大小限制 单位KB MB GB |
+| totalSizeCap | String                                |     | 默认1GB   | 日志总大小上限 单位KB MB GB    |
+| maxHistory   | Integer                               |     | 默认30    | 日志保留天数                |
 
-**LogLevelEnum[String]** 日志级别枚举
+### LogLevelEnum[String]
+日志级别枚举
 
 | 值     | 描述       |
 |-------|----------|
@@ -231,18 +237,20 @@ blackbox.rootPath: /config # 存放配置的根目录
 | ERROR |          |
 | OFF   | 所有日志都不打印 |
 
-**Param** 参数
+### Param
+参数
 
-| 属性名        | 类型                | 必填  | 约束                 | 描述                      |
-|------------|-------------------|-----|--------------------|-------------------------|
-| name       | String            | `*` | 命名规则**KEY** 同层级下唯一 | 参数名                     |
-| value      | Object            |     |                    | 参数默认值                   |
-| type       | **ValueTypeEnum** | `*` | 默认STRING           | 参数值类型                   |
-| validation | **Validation**    |     |                    | 验证规则                    |
-| item       | **Item**          |     | type为ARRAY必填       | 定义数组元素信息 type为ARRAY时定义  |
-| properties | **Param[]**       |     | type为OBJECT必填      | 定义嵌套对象信息 type为OBJECT时定义 |
+| 属性名        | 类型                                      | 必填  | 约束                      | 描述                      |
+|------------|-----------------------------------------|-----|-------------------------|-------------------------|
+| name       | String                                  | `*` | [命名规则KEY](#附加说明) 同层级下唯一 | 参数名                     |
+| value      | Object                                  |     |                         | 参数默认值                   |
+| type       | [ValueTypeEnum](#ValueTypeEnum[String]) | `*` | 默认STRING                | 参数值类型                   |
+| validation | [Validation](#Validation)               |     |                         | 验证规则                    |
+| item       | [Item](#Item)                           |     | type为ARRAY必填            | 定义数组元素信息 type为ARRAY时定义  |
+| properties | [Param[]](#Param)                       |     | type为OBJECT必填           | 定义嵌套对象信息 type为OBJECT时定义 |
 
-**ValueTypeEnum[String]** 值类型
+### ValueTypeEnum[String]
+值类型
 
 | 值       | 描述  |
 |---------|-----|
@@ -253,77 +261,80 @@ blackbox.rootPath: /config # 存放配置的根目录
 | ARRAY   | 数组型 |
 | OBJECT  | 对象型 |
 
-**Validation** 验证规则
+### Validation
+验证规则
 
 | 属性名      | 类型      | 必填  | 约束  | 描述                                                                                             |
 |----------|---------|-----|-----|------------------------------------------------------------------------------------------------|
 | notNull  | Boolean |     |     | 是否必填<br/>适用所有类型                                                                                |
-| notEmpty | Boolean |     |     | 是否允许为空<br/>类型为ARRAY时不为空数组[]<br/>类型为Object时不为空对象{}<br/>类型为STRING时不为空字符串""                       |
+| notEmpty | Boolean |     |     | 是否允许为空<br/>类型为ARRAY时不为空数组[]<br/>类型为OBJECT时不为空对象{}<br/>类型为STRING时不为空字符串""                       |
 | notBlank | Boolean |     |     | 是否允许为空<br/>字符串trim后不为空字符串""                                                                    |
 | pattern  | String  |     |     | 正则校验<br/>字符串格式验证                                                                               |
 | max      | Double  |     |     | 必须小于等于该值<br/>类型为INTEGER、NUMBER时表示值<br/>类型为STRING时表示长度<br/>类型为ARRAY时表示数组长度<br/>类型为OBJECT时表示属性数量 |
 | min      | Double  |     |     | 必须大于等于该值<br/>类型为INTEGER、NUMBER时表示值<br/>类型为STRING时表示长度<br/>类型为ARRAY时表示数组长度<br/>类型为OBJECT时表示属性数量 |
 | script   | String  |     |     | 自定义验证脚本 内置变量self表示当前参数值 <br/>适用所有类型                                                            |
 
-**Item** 数组元素信息
+### Item
+数组元素信息
 
-| 属性名        | 类型                | 必填  | 约束            | 描述                      |
-|------------|-------------------|-----|---------------|-------------------------|
-| type       | **ValueTypeEnum** | `*` | 默认STRING      | 参数值类型                   |
-| validation | **Validation**    |     |               | 验证规则                    |
-| item       | **Item**          |     | type为ARRAY必填  | 定义数组元素信息 type为ARRAY时定义  |
-| properties | **Param[]**       |     | type为OBJECT必填 | 定义嵌套对象信息 type为OBJECT时定义 |
+| 属性名        | 类型                                      | 必填  | 约束            | 描述                      |
+|------------|-----------------------------------------|-----|---------------|-------------------------|
+| type       | [ValueTypeEnum](#ValueTypeEnum[String]) | `*` | 默认STRING      | 参数值类型                   |
+| validation | [Validation](#Validation)               |     |               | 验证规则                    |
+| item       | [Item](#Item)                           |     | type为ARRAY必填  | 定义数组元素信息 type为ARRAY时定义  |
+| properties | [Param[]](#Param)                       |     | type为OBJECT必填 | 定义嵌套对象信息 type为OBJECT时定义 |
 
-**Meters** 指标定义
+### Meters
+指标定义
 
 至少定义一种类型的指标
 
-| 属性名       | 类型            | 必填  | 约束  | 描述          |
-|-----------|---------------|-----|-----|-------------|
-| counters  | **Counter[]** |     |     | Counter类型指标 |
-| gauges    | **Gauge[]**   |     |     | Gauge类型指标   |
-| timers    | **Timer[]**   |     |     | Timer类型指标   |
-| summaries | **Summary[]** |     |     | Summary类型指标 |
+| 属性名       | 类型                    | 必填  | 约束  | 描述          |
+|-----------|-----------------------|-----|-----|-------------|
+| counters  | [Counter[]](#Counter) |     |     | Counter类型指标 |
+| gauges    | [Gauge[]](#Gauge)     |     |     | Gauge类型指标   |
+| timers    | [Timer[]](#Timer)     |     |     | Timer类型指标   |
+| summaries | [Summary[]](#Summary) |     |     | Summary类型指标 |
 
-**Counter**
+### Counter
 
-| 属性名  | 类型       | 必填  | 约束                       | 描述                                                                       |
-|------|----------|-----|--------------------------|--------------------------------------------------------------------------|
-| name | String   | `*` | 命名规则**METRIC** Meters下唯一 | 指标名 命名风格推荐xxx.xxx.xxx方式 根据不同的监控系统会生成对应风格的指标名 例如Prometheus则最终为xxx_xxx_xxx |
-| desc | String   | `*` |                          | 描述                                                                       |
-| unit | String   |     | 命名规则**KEY**              | 单位 会以一定风格拼接到指标名                                                          |
-| tags | String[] |     | 命名规则**KEY**              | 指标的tag集合 例如Prometheus则为label集合                                           |
+| 属性名  | 类型       | 必填  | 约束                                       | 描述                                                                       |
+|------|----------|-----|------------------------------------------|--------------------------------------------------------------------------|
+| name | String   | `*` | [命名规则METRIC](#附加说明) [Meters](#Meters)下唯一 | 指标名 命名风格推荐xxx.xxx.xxx方式 根据不同的监控系统会生成对应风格的指标名 例如Prometheus则最终为xxx_xxx_xxx |
+| desc | String   | `*` |                                          | 描述                                                                       |
+| unit | String   |     | [命名规则KEY](#附加说明)                         | 单位 会以一定风格拼接到指标名                                                          |
+| tags | String[] |     | [命名规则KEY](#附加说明)                         | 指标的tag集合 例如Prometheus则为label集合                                           |
 
-**Gauge**
+### Gauge
 
-| 属性名  | 类型       | 必填  | 约束                       | 描述       |
-|------|----------|-----|--------------------------|----------|
-| name | String   | `*` | 命名规则**METRIC** Meters下唯一 | 同Counter |
-| desc | String   | `*` |                          | 同Counter |
-| unit | String   |     | 同Counter                 | 同Counter |
-| tags | String[] |     | 同Counter                 | 同Counter |
+| 属性名  | 类型       | 必填  | 约束                                       | 描述                   |
+|------|----------|-----|------------------------------------------|----------------------|
+| name | String   | `*` | [命名规则METRIC](#附加说明) [Meters](#Meters)下唯一 | 同[Counter](#Counter) |
+| desc | String   | `*` |                                          | 同[Counter](#Counter) |
+| unit | String   |     | 同[Counter](#Counter)                     | 同[Counter](#Counter) |
+| tags | String[] |     | 同[Counter](#Counter)                     | 同[Counter](#Counter) |
 
-**Timer** 
-
+### Timer
 Timer专用于时间
 
-| 属性名                    | 类型               | 必填  | 约束                       | 描述                                                                                                                                                                                                                                                                                                                                                                                  |
-|------------------------|------------------|-----|--------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| name                   | String           | `*` | 命名规则**METRIC** Meters下唯一 | 同Counter                                                                                                                                                                                                                                                                                                                                                                            |
-| desc                   | String           | `*` |                          | 同Counter                                                                                                                                                                                                                                                                                                                                                                            |
-| unit                   | String           |     |                          | 不支持                                                                                                                                                                                                                                                                                                                                                                                 |
-| tags                   | String[]         |     | 同Counter                 | 同Counter                                                                                                                                                                                                                                                                                                                                                                            |
-| percentileHistogram    | Boolean          |     |                          | 用于在Prometheus（使用histogram_quantile）、Atlas（使用：percentrice）和Wavefront（使用hs（））中发布适用于计算可聚合（跨维度）百分比近似值的直方图。对于Prometheus和Atlas，Micrometer基于Netflix根据经验确定的生成器预设了生成直方图中的桶，以产生大多数真实世界计时器和分发摘要的合理误差。默认情况下，生成器生成276个桶，但Micrometer仅包含在minimumExpectedValue和maximumExpectedValue（含）设置的范围内的桶。默认情况下，千分尺将计时器钳制在1毫秒到1分钟的范围内，每个计时器维度产生73个直方图桶。publishPercentileHistogram对不支持聚合百分比近似的系统没有影响。这些系统没有直方图。 | 
-| percentiles            | Double[]         |     | 值域[0,1]                  | 客户端计算分位线 用于发布应用程序中计算的百分比值 这些值在维度之间不可聚合                                                                                                                                                                                                                                                                                                                                              |
-| serviceLevelObjectives | Double[]         |     |                          | 服务端计算分位线 用于发布具有SLO定义的桶的累积直方图。当在支持可聚合百分位数的监控系统上与publishPercentileHistogram一起使用时，此设置会向已发布的直方图添加额外的桶。当在不支持可聚合百分位数的系统上使用时，此设置会导致仅使用这些桶发布直方图。若Prometheus则为bucket的le标签值 值单位由timeUnit配置                                                                                                                                                                                                    |
-| minimumExpectedValue   | Double           |     |                          | 接受的最小值 值单位由timeUnit配置                                                                                                                                                                                                                                                                                                                                                               |
-| maximumExpectedValue   | Double           |     |                          | 接受的最大值 值单位由timeUnit配置                                                                                                                                                                                                                                                                                                                                                               |
-| percentilePrecision    | Integer          |     | 默认1                      | 精度                                                                                                                                                                                                                                                                                                                                                                                  |
-| expiry                 | Double           |     | 默认2分钟                    | 用于计算窗口统计数据的步长 如max 值单位由timeUnit配置                                                                                                                                                                                                                                                                                                                                                   | 
-| bufferLength           | Integer          |     | 默认3                      | 缓冲长度                                                                                                                                                                                                                                                                                                                                                                                |
-| timeUnit               | **TimeUnitEnum** | `*` | 默认SECOND                 | 时间单位                                                                                                                                                                                                                                                                                                                                                                                |
+| 属性名                    | 类型                                    | 必填  | 约束                                       | 描述                                                                                                                                                                                                                                                                                                                                                                                  |
+|------------------------|---------------------------------------|-----|------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| name                   | String                                | `*` | [命名规则METRIC](#附加说明) [Meters](#Meters)下唯一 | 同[Counter](#Counter)                                                                                                                                                                                                                                                                                                                                                                |
+| desc                   | String                                | `*` |                                          | 同[Counter](#Counter)                                                                                                                                                                                                                                                                                                                                                                |
+| unit                   | String                                |     |                                          | 不支持                                                                                                                                                                                                                                                                                                                                                                                 |
+| tags                   | String[]                              |     | 同[Counter](#Counter)                     | 同[Counter](#Counter)                                                                                                                                                                                                                                                                                                                                                                |
+| percentileHistogram    | Boolean                               |     |                                          | 用于在Prometheus（使用histogram_quantile）、Atlas（使用：percentrice）和Wavefront（使用hs（））中发布适用于计算可聚合（跨维度）百分比近似值的直方图。对于Prometheus和Atlas，Micrometer基于Netflix根据经验确定的生成器预设了生成直方图中的桶，以产生大多数真实世界计时器和分发摘要的合理误差。默认情况下，生成器生成276个桶，但Micrometer仅包含在minimumExpectedValue和maximumExpectedValue（含）设置的范围内的桶。默认情况下，千分尺将计时器钳制在1毫秒到1分钟的范围内，每个计时器维度产生73个直方图桶。publishPercentileHistogram对不支持聚合百分比近似的系统没有影响。这些系统没有直方图。 | 
+| percentiles            | Double[]                              |     | 值域[0,1]                                  | 客户端计算分位线 用于发布应用程序中计算的百分比值 这些值在维度之间不可聚合                                                                                                                                                                                                                                                                                                                                              |
+| serviceLevelObjectives | Double[]                              |     |                                          | 服务端计算分位线 用于发布具有SLO定义的桶的累积直方图。当在支持可聚合百分位数的监控系统上与publishPercentileHistogram一起使用时，此设置会向已发布的直方图添加额外的桶。当在不支持可聚合百分位数的系统上使用时，此设置会导致仅使用这些桶发布直方图。若Prometheus则为bucket的le标签值 值单位由timeUnit配置                                                                                                                                                                                                    |
+| minimumExpectedValue   | Double                                |     |                                          | 接受的最小值 值单位由timeUnit配置                                                                                                                                                                                                                                                                                                                                                               |
+| maximumExpectedValue   | Double                                |     |                                          | 接受的最大值 值单位由timeUnit配置                                                                                                                                                                                                                                                                                                                                                               |
+| percentilePrecision    | Integer                               |     | 默认1                                      | 精度                                                                                                                                                                                                                                                                                                                                                                                  |
+| expiry                 | Double                                |     | 默认2分钟                                    | 用于计算窗口统计数据的步长 如max 值单位由timeUnit配置                                                                                                                                                                                                                                                                                                                                                   | 
+| bufferLength           | Integer                               |     | 默认3                                      | 缓冲长度                                                                                                                                                                                                                                                                                                                                                                                |
+| timeUnit               | [TimeUnitEnum](#TimeUnitEnum[String]) | `*` | 默认SECOND                                 | 时间单位                                                                                                                                                                                                                                                                                                                                                                                |
 
-**TimeUnitEnum[String]** 时间单位
+### TimeUnitEnum[String]
+时间单位
 
 | 值            | 描述  |
 |--------------|-----|
@@ -331,115 +342,124 @@ Timer专用于时间
 | SECONDS      | 秒   |
 | MINUTES      | 分   |
 
-**Summary**
+### Summary
 
-| 属性名                    | 类型               | 必填  | 约束                       | 描述                                                                                                                                                                                                                                                                                                                                                                                  |
-|------------------------|------------------|-----|--------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| name                   | String           | `*` | 命名规则**METRIC** Meters下唯一 | 同Counter                                                                                                                                                                                                                                                                                                                                                                            |
-| desc                   | String           | `*` |                          | 同Counter                                                                                                                                                                                                                                                                                                                                                                            |
-| unit                   | String           |     | 同Counter                 | 同Counter                                                                                                                                                                                                                                                                                                                                                                            |
-| tags                   | String[]         |     | 同Counter                 | 同Counter                                                                                                                                                                                                                                                                                                                                                                            |
-| percentileHistogram    | Boolean          |     |                          | 用于在Prometheus（使用histogram_quantile）、Atlas（使用：percentrice）和Wavefront（使用hs（））中发布适用于计算可聚合（跨维度）百分比近似值的直方图。对于Prometheus和Atlas，Micrometer基于Netflix根据经验确定的生成器预设了生成直方图中的桶，以产生大多数真实世界计时器和分发摘要的合理误差。默认情况下，生成器生成276个桶，但Micrometer仅包含在minimumExpectedValue和maximumExpectedValue（含）设置的范围内的桶。默认情况下，千分尺将计时器钳制在1毫秒到1分钟的范围内，每个计时器维度产生73个直方图桶。publishPercentileHistogram对不支持聚合百分比近似的系统没有影响。这些系统没有直方图。 | 
-| percentiles            | Double[]         |     | 值域[0,1]                  | 客户端计算分位线 用于发布应用程序中计算的百分比值 这些值在维度之间不可聚合                                                                                                                                                                                                                                                                                                                                              |
-| serviceLevelObjectives | Double[]         |     |                          | 服务端计算分位线 用于发布具有SLO定义的桶的累积直方图。当在支持可聚合百分位数的监控系统上与publishPercentileHistogram一起使用时，此设置会向已发布的直方图添加额外的桶。当在不支持可聚合百分位数的系统上使用时，此设置会导致仅使用这些桶发布直方图。若Prometheus则为bucket的le标签值 值单位由timeUnit配置                                                                                                                                                                                                    |
-| minimumExpectedValue   | Double           |     |                          | 接受的最小值 值单位由timeUnit配置                                                                                                                                                                                                                                                                                                                                                               |
-| maximumExpectedValue   | Double           |     |                          | 接受的最大值 值单位由timeUnit配置                                                                                                                                                                                                                                                                                                                                                               |
-| percentilePrecision    | Integer          |     | 默认1                      | 精度                                                                                                                                                                                                                                                                                                                                                                                  |
-| expiry                 | Double           |     | 默认2分钟                    | 用于计算窗口统计数据的步长 如max 值单位由timeUnit配置                                                                                                                                                                                                                                                                                                                                                   | 
-| bufferLength           | Integer          |     | 默认3                      | 缓冲长度                                                                                                                                                                                                                                                                                                                                                                                |
-| timeUnit               | **TimeUnitEnum** |     | 默认SECOND                 | 时间单位                                                                                                                                                                                                                                                                                                                                                                                |
-| scale                  | Double           |     |                          | 如果采集数据值较小 可将数值放大相应倍数                                                                                                                                                                                                                                                                                                                                                                | 
+| 属性名                    | 类型                                    | 必填  | 约束                                       | 描述                                                                                                                                                                                                                                                                                                                                                                                  |
+|------------------------|---------------------------------------|-----|------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| name                   | String                                | `*` | [命名规则METRIC](#附加说明) [Meters](#Meters)下唯一 | 同Counter                                                                                                                                                                                                                                                                                                                                                                            |
+| desc                   | String                                | `*` |                                          | 同Counter                                                                                                                                                                                                                                                                                                                                                                            |
+| unit                   | String                                |     | 同[Counter](#Counter)                     | 同Counter                                                                                                                                                                                                                                                                                                                                                                            |
+| tags                   | String[]                              |     | 同[Counter](#Counter)                     | 同Counter                                                                                                                                                                                                                                                                                                                                                                            |
+| percentileHistogram    | Boolean                               |     |                                          | 用于在Prometheus（使用histogram_quantile）、Atlas（使用：percentrice）和Wavefront（使用hs（））中发布适用于计算可聚合（跨维度）百分比近似值的直方图。对于Prometheus和Atlas，Micrometer基于Netflix根据经验确定的生成器预设了生成直方图中的桶，以产生大多数真实世界计时器和分发摘要的合理误差。默认情况下，生成器生成276个桶，但Micrometer仅包含在minimumExpectedValue和maximumExpectedValue（含）设置的范围内的桶。默认情况下，千分尺将计时器钳制在1毫秒到1分钟的范围内，每个计时器维度产生73个直方图桶。publishPercentileHistogram对不支持聚合百分比近似的系统没有影响。这些系统没有直方图。 | 
+| percentiles            | Double[]                              |     | 值域[0,1]                                  | 客户端计算分位线 用于发布应用程序中计算的百分比值 这些值在维度之间不可聚合                                                                                                                                                                                                                                                                                                                                              |
+| serviceLevelObjectives | Double[]                              |     |                                          | 服务端计算分位线 用于发布具有SLO定义的桶的累积直方图。当在支持可聚合百分位数的监控系统上与publishPercentileHistogram一起使用时，此设置会向已发布的直方图添加额外的桶。当在不支持可聚合百分位数的系统上使用时，此设置会导致仅使用这些桶发布直方图。若Prometheus则为bucket的le标签值 值单位由timeUnit配置                                                                                                                                                                                                    |
+| minimumExpectedValue   | Double                                |     |                                          | 接受的最小值 值单位由timeUnit配置                                                                                                                                                                                                                                                                                                                                                               |
+| maximumExpectedValue   | Double                                |     |                                          | 接受的最大值 值单位由timeUnit配置                                                                                                                                                                                                                                                                                                                                                               |
+| percentilePrecision    | Integer                               |     | 默认1                                      | 精度                                                                                                                                                                                                                                                                                                                                                                                  |
+| expiry                 | Double                                |     | 默认2分钟                                    | 用于计算窗口统计数据的步长 如max 值单位由timeUnit配置                                                                                                                                                                                                                                                                                                                                                   | 
+| bufferLength           | Integer                               |     | 默认3                                      | 缓冲长度                                                                                                                                                                                                                                                                                                                                                                                |
+| timeUnit               | [TimeUnitEnum](#TimeUnitEnum[String]) |     | 默认SECOND                                 | 时间单位                                                                                                                                                                                                                                                                                                                                                                                |
+| scale                  | Double                                |     |                                          | 如果采集数据值较小 可将数值放大相应倍数                                                                                                                                                                                                                                                                                                                                                                | 
 
-**Script** 脚本
+### Script
+脚本
 
-| 属性名  | 类型     | 必填  | 约束                       | 描述                                                                                                                 |
-|------|--------|-----|--------------------------|--------------------------------------------------------------------------------------------------------------------|
-| name | String | `*` | 命名规则**NAME** Exporter下唯一 | 名称                                                                                                                 |
-| file | String | `*` |                          | 脚本文件相对路径 相对/script目录 例如{rootPath}/exporters/{exporter_name}/script/xxx/{script_name}.js为例 路径则为xxx/{script_name}.js |
+| 属性名  | 类型     | 必填  | 约束                                         | 描述                                                                                                                 |
+|------|--------|-----|--------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
+| name | String | `*` | [命名规则NAME](#附加说明) [Exporter](#Exporter)下唯一 | 名称                                                                                                                 |
+| file | String | `*` |                                            | 脚本文件相对路径 相对/script目录 例如{rootPath}/exporters/{exporter_name}/script/xxx/{script_name}.js为例 路径则为xxx/{script_name}.js |
 
-**Pipeline** 流水线
+### Pipeline
+流水线
 
-| 属性名    | 类型          | 必填  | 约束                       | 描述            |
-|--------|-------------|-----|--------------------------|---------------|
-| name   | String      | `*` | 命名规则**NAME** Exporter下唯一 | 名称            |
-| stages | **Stage[]** | `*` |                          | 场景集合 场景之间串行执行 |
+| 属性名    | 类型                | 必填  | 约束                                         | 描述            |
+|--------|-------------------|-----|--------------------------------------------|---------------|
+| name   | String            | `*` | [命名规则NAME](#附加说明) [Exporter](#Exporter)下唯一 | 名称            |
+| stages | [Stage[]](#Stage) | `*` |                                            | 场景集合 场景之间串行执行 |
 
-**Stage** 场景 
+### Stage
+场景 
 
 同时配置serial和parallel 只会执行serial
 
-| 属性名      | 类型       | 必填            | 约束             | 描述            |
-|----------|----------|---------------|----------------|---------------|
-| title    | String   | `*`           |                | 标题            |
-| serial   | String[] | parallel为空时必填 | 值参照Script.name | 串行执行的Script集合 |
-| parallel | String[] | serial为空时必填   | 值参照Script.name | 并行执行的Script集合 |
+| 属性名      | 类型       | 必填            | 约束                        | 描述            |
+|----------|----------|---------------|---------------------------|---------------|
+| title    | String   | `*`           |                           | 标题            |
+| serial   | String[] | parallel为空时必填 | 值参照[Script.name](#Script) | 串行执行的Script集合 |
+| parallel | String[] | serial为空时必填   | 值参照[Script.name](#Script) | 并行执行的Script集合 |
 
-**Trigger** 触发器 
+### Trigger
+触发器 
 
 在某个事件的某个时机触发执行一个Pipeline或一个Script
 
-| 属性名      | 类型            | 必填             | 约束               | 描述          |
-|----------|---------------|----------------|------------------|-------------|
-| time     | **TimeEnum**  | `*`            |                  | 时机          |
-| event    | **EventEnum** | `*`            |                  | 事件          |
-| pipeline | String        | 当script为空时必填   | 值参照Pipeline.name | 执行的Pipeline |
-| script   | String        | 当pipeline为空时必填 | 值参照Script.name   | 执行的Script   |
+| 属性名      | 类型                              | 必填             | 约束                            | 描述          |
+|----------|---------------------------------|----------------|-------------------------------|-------------|
+| time     | [TimeEnum](#TimeEnum[String])   | `*`            |                               | 时机          |
+| event    | [EventEnum](#EventEnum[String]) | `*`            |                               | 事件          |
+| pipeline | String                          | 当script为空时必填   | 值参照[Pipeline.name](#Pipeline) | 执行的Pipeline |
+| script   | String                          | 当pipeline为空时必填 | 值参照[Script.name](#Script)     | 执行的Script   |
 
-**TimeEnum[String]** 时机
+### TimeEnum[String]
+时机
 
 | 值      | 描述  |
 |--------|-----|
 | BEFORE | 之前  |
 | AFTER  | 之后  |
 
-**EventEnum[String]** 事件
+### EventEnum[String]
+事件
 
 | 值       | 描述  |
 |---------|-----|
 | COLLECT | 采集  |
 
-**Collector** 采集模块 
+### Collector
+采集模块 
 
 模块之间并行执行
 
 调用Case采集接口时并不会执行定义了cron的采集模块
 
-| 属性名      | 类型     | 必填             | 约束                       | 描述                                         |
-|----------|--------|----------------|--------------------------|--------------------------------------------|
-| name     | String | `*`            | 命名规则**NAME** Exporter下唯一 | 名称                                         |
-| cron     | String |                | 符合cron语法                 | 根据cron表达式定时执行 例如 `0/30 * * * * ?` 每30秒执行一次 |
-| pipeline | String | 当script为空时必填   | 值参照Pipeline.name         | 执行的Pipeline                                |
-| script   | String | 当pipeline为空时必填 | 值参照Script.name           | 执行的Script                                  |
+| 属性名      | 类型     | 必填             | 约束                                         | 描述                                         |
+|----------|--------|----------------|--------------------------------------------|--------------------------------------------|
+| name     | String | `*`            | [命名规则NAME](#附加说明) [Exporter](#Exporter)下唯一 | 名称                                         |
+| cron     | String |                | 符合cron语法                                   | 根据cron表达式定时执行 例如 `0/30 * * * * ?` 每30秒执行一次 |
+| pipeline | String | 当script为空时必填   | 值参照[Pipeline.name](#Pipeline)              | 执行的Pipeline                                |
+| script   | String | 当pipeline为空时必填 | 值参照[Script.name](#Script)                  | 执行的Script                                  |
 
-**Extensions** 扩展配置
+### Extensions
+扩展配置
 
-| 属性名                     | 类型     | 必填  | 约束  | 描述                                            |
-|-------------------------|--------|-----|-----|-----------------------------------------------|
-| params.validationScript | String |     |     | 验证脚本 用于验证Case.params的值 内置变量self表示整个params参数对象 |
+| 属性名                     | 类型     | 必填  | 约束  | 描述                                                     |
+|-------------------------|--------|-----|-----|--------------------------------------------------------|
+| params.validationScript | String |     |     | 验证脚本 用于验证[Case.params](#Case)的值 内置变量self表示整个params参数对象 |
 
 # 脚本说明
 脚本引擎GraalVM JavaScript
 
-**访问权限配置**
+### 访问权限配置
 * allowHostAccess: true
 
-**其他可选项**
+### 其他可选项
 * js.ecmascript-version: 2022
 
-**内置变量**
+### 内置变量
 
-| 访问方式     | 类型         | 描述                                         |
-|----------|------------|--------------------------------------------|
-| $.params | **JSON**   | Case的参数 只读 值为Case.params                   |
-| $.vars   | **Scope**  | 用来存储数据 生命周期为每次Collect                      |
-| $.stores | **Scope**  | 用来存储数据 生命周期为整个Case实例                       |
-| $.meters | **Meters** | 指标工具类 底层Micrometer实现                       |
-| $.http   | **Http**   | Http工具类 底层JDK HttpClient实现                 |
-| $.shell  | **Shell**  | Shell工具类 底层JDK Runtime.getRuntime().exec() |
-| $.log    | **Log**    | 日志记录器 底层Logback实现 打印至Case的/logs目录          |
-| $.json   | **Json**   | Json工具类 底层Fastjson实现                       |
+| 访问方式     | 类型                        | 描述                                         |
+|----------|---------------------------|--------------------------------------------|
+| $.params | [JSON](#JSON)             | Case的参数 只读 值为[Case.params](#Case)          |
+| $.vars   | [Scope](#ScopeVarUtils)   | 用来存储数据 生命周期为每次Collect                      |
+| $.stores | [Scope](#ScopeVarUtils)   | 用来存储数据 生命周期为整个Case实例                       |
+| $.meters | [MeterUtils](#MeterUtils) | 指标工具类 底层Micrometer实现                       |
+| $.http   | [HttpUtils](#HttpUtils)   | Http工具类 底层JDK HttpClient实现                 |
+| $.shell  | [ShellUtils](#ShellUtils) | Shell工具类 底层JDK Runtime.getRuntime().exec() |
+| $.log    | [LogUtils](#LogUtils)     | 日志记录器 底层Logback实现 打印至Case的/logs目录          |
+| $.json   | [JSONUtils](#JsonUtils)   | Json工具类 底层Fastjson实现                       |
 
-**Scope** 作用域
+### ScopeVarUtils
+作用域
 
 用来存储数据 多线程安全 
 
@@ -451,48 +471,53 @@ Timer专用于时间
 | Object get(String key)             |     | 获取变量值 |
 | Object remove(String key)          |     | 移除变量  |
 
-**Meters** 指标工具类
+### MeterUtils
+指标工具类
 
 底层Micrometer实现
 
-| 方法签名                                 | 约束  | 描述                                    |
-|--------------------------------------|-----|---------------------------------------|
-| void counter(**MeterRecord** record) |     | record.value为增量                       |
-| void gauge(**MeterRecord** record)   |     | record.value为当前值                      |
-| void timer(**MeterRecord** record)   |     | record.value为记录时长 单位由Timer.timeUnit配置 |
-| void summary(**MeterRecord** record) |     | record.value为记录值                      |
+| 方法签名                                                   | 约束  | 描述                                              |
+|--------------------------------------------------------|-----|-------------------------------------------------|
+| void counter([MeterRecord](#MeterRecord[JSON]) record) |     | record.value为增量                                 |
+| void gauge([MeterRecord](#MeterRecord[JSON]) record)   |     | record.value为当前值                                |
+| void timer([MeterRecord](#MeterRecord[JSON]) record)   |     | record.value为记录时长 单位由[Timer.timeUnit](#Timer)配置 |
+| void summary([MeterRecord](#MeterRecord[JSON]) record) |     | record.value为记录值                                |
 
-**MeterRecord[JSON]** 指标记录
+### MeterRecord[JSON]
+指标记录
 
-| 属性名   | 类型       | 必填  | 约束                                                   | 描述              |
-|-------|----------|-----|------------------------------------------------------|-----------------|
-| meter | String   | `*` | 值参照Counter.name Gauge.name Timer.name Summary.name   | 指标名             |
-| tags  | String[] | `*` | 值顺序参照Counter.tags Gauge.tags Timer.tags Summary.tags | tag值            |
-| value | Number   | `*` |                                                      | 指标值 不同指标类型的含义不同 |
+| 属性名   | 类型       | 必填  | 约束                                                                                               | 描述              |
+|-------|----------|-----|--------------------------------------------------------------------------------------------------|-----------------|
+| meter | String   | `*` | 值参照[Counter.name](#Counter) [Gauge.name](#Gauge) [Timer.name](#Timer) [Summary.name](#Summary)   | 指标名             |
+| tags  | String[] | `*` | 值顺序参照[Counter.tags](#Counter) [Gauge.tags](#Gauge) [Timer.tags](#Timer) [Summary.tags](#Summary) | tag值            |
+| value | Number   | `*` |                                                                                                  | 指标值 不同指标类型的含义不同 |
 
-**Http** Http工具类 
+### HttpUtils
+Http工具类 
 
 底层JDK HttpClient实现
 
-| 方法签名                                           | 约束  | 描述                               |
-|------------------------------------------------|-----|----------------------------------|
-| **HttpClient** getClient()                     |     | 返回http客户端  若想获取更多信息可以用Client自由实现 |
-| **HttpResponse** send(**HttpRequest** request) |     | 执行http请求                         |
-| String encode(String str)                      |     | url编码                            |
-| String decode(String str)                      |     | url解码                            |
+| 方法签名                                                                                | 约束  | 描述                               |
+|-------------------------------------------------------------------------------------|-----|----------------------------------|
+| **HttpClient** getClient()                                                          |     | 返回http客户端  若想获取更多信息可以用Client自由实现 |
+| [HttpResponse](#HttpResponse[JSON]) send([HttpRequest](#HttpRequest[JSON]) request) |     | 执行http请求                         |
+| String encode(String str)                                                           |     | url编码                            |
+| String decode(String str)                                                           |     | url解码                            |
 
-**HttpRequest[JSON]** Http请求
+### HttpRequest[JSON]
+Http请求
 
-| 属性名     | 类型                 | 必填  | 约束                           | 描述       |
-|---------|--------------------|-----|------------------------------|----------|
-| timeout | Integer            |     |                              | 超时时长 单位秒 |
-| method  | **HttpMethodEnum** |     | 默认GET                        | Http方法   |
-| url     | String             | `*` |                              | 资源地址     |
-| params  | **JSON**           |     | 键类型String 值类型String或String[] | url参数    |
-| headers | **JSON**           |     | 键类型String 值类型String或String[] | 请求头      |
-| body    | String             |     |                              | 请求体      |
+| 属性名     | 类型                                        | 必填  | 约束                           | 描述       |
+|---------|-------------------------------------------|-----|------------------------------|----------|
+| timeout | Integer                                   |     |                              | 超时时长 单位秒 |
+| method  | [HttpMethodEnum](#HttpMethodEnum[String]) |     | 默认GET                        | Http方法   |
+| url     | String                                    | `*` |                              | 资源地址     |
+| params  | [JSON](#JSON)                             |     | 键类型String 值类型String或String[] | url参数    |
+| headers | [JSON](#JSON)                             |     | 键类型String 值类型String或String[] | 请求头      |
+| body    | String                                    |     |                              | 请求体      |
 
-**HttpMethodEnum[String]** Http方法
+### HttpMethodEnum[String]
+Http方法
 
 | 值       | 描述  |
 |---------|-----|
@@ -505,29 +530,33 @@ Timer专用于时间
 | HEAD    |     |
 | TRACE   |     |
 
-**HttpResponse[JSON]** Http响应结果
+### HttpResponse[JSON]
+Http响应结果
 
-| 属性名     | 类型      | 约束  | 描述                        |
-|---------|---------|-----|---------------------------|
-| code    | Integer |     | 响应状态码                     |
-| headers | JSON    |     | 响应头 键类型String 值类型String[] |
-| body    | String  |     | 响应数据                      |
+| 属性名     | 类型            | 约束  | 描述                        |
+|---------|---------------|-----|---------------------------|
+| code    | Integer       |     | 响应状态码                     |
+| headers | [JSON](#JSON) |     | 响应头 键类型String 值类型String[] |
+| body    | String        |     | 响应数据                      |
 
-**Shell** Shell工具类
+### ShellUtils
+Shell工具类
 
 底层JDK Runtime.getRuntime().exec()
 
-| 方法签名                                    | 约束  | 描述    |
-|-----------------------------------------|-----|-------|
-| **CommandResult** exec(**Command** cmd) |     | 执行cmd |
+| 方法签名                                                                      | 约束  | 描述    |
+|---------------------------------------------------------------------------|-----|-------|
+| [CommandResult](#CommandResult[JSON]) exec([Command](#Command[JSON]) cmd) |     | 执行cmd |
 
-**Command[JSON]** 命令行
+### Command[JSON]
+命令行
 
 | 属性名 | 类型     | 必填  | 约束  | 描述     |
 |-----|--------|-----|-----|--------|
 | cmd | String | `*` |     | 命令行字符串 |
 
-**CommandResult[JSON]** 命令行执行结果
+### CommandResult[JSON]
+命令行执行结果
 
 | 属性名     | 类型      | 约束  | 描述                             |
 |---------|---------|-----|--------------------------------|
@@ -536,7 +565,8 @@ Timer专用于时间
 | stderr  | String  |     | 标准错误输出的信息                      |
 | message | String  |     | 执行cmd时异常的信息 当执行异常时 code可能为null |
 
-**Log** 日志记录器 
+### LogUtils
+日志记录器 
 
 底层Logback实现
 
@@ -559,18 +589,19 @@ Timer专用于时间
 | boolean isError()                              |     | Error级别是否生效 |
 | void error(Object format, Object... arguments) |     | 打印Error级别日志 |
 
-**Json** Json工具类 
+### JsonUtils
+Json工具类 
 
 底层Fastjson实现
 
-| 方法签名                        | 约束  | 描述              |
-|-----------------------------|-----|-----------------|
-| **JSON** parse(String json) |     | 解析json文本为JSON对象 |
-| String string(Object obj)   |     | 把对象序列化成json文本   |
+| 方法签名                             | 约束  | 描述              |
+|----------------------------------|-----|-----------------|
+| [JSON](#JSON) parse(String json) |     | 解析json文本为JSON对象 |
+| String string(Object obj)        |     | 把对象序列化成json文本   |
 
 # OpenAPI
 
-**根据Exporter定义 指定参数采集一次 调试Exporter Case时用**
+### 根据Exporter定义 指定参数采集一次 调试Exporter Case时用
 
 POST /api/v1/exporter/collect
 
@@ -604,7 +635,7 @@ ResponseHeader
 
 ---
 
-**根据Case定义采集一次**
+### 根据Case定义采集一次
 
 GET /api/v1/case/{case}/collect
 
@@ -623,7 +654,7 @@ ResponseBody
 
 ---
 
-**指标上报接口 返回Prometheus格式的指标**
+### 指标上报接口 返回Prometheus格式的指标
 
 GET /api/v1/case/{case}/prometheus
 
@@ -632,7 +663,7 @@ ResponseHeader
 
 ---
 
-**配置文件reload**
+### 配置文件reload
 
 POST /api/v1/manage/reload
 
